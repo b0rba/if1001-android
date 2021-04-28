@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="@dimen/main_card_outside_padding">
+
+    <TextView
+        android:id="@+id/card_text"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:text="FEATURE_NAME"
+        android:padding="@dimen/main_card_inside_padding"
+        android:gravity="center_vertical"
+        android:layout_weight="1">
+    </TextView>
+
+    <com.google.android.material.switchmaterial.SwitchMaterial
+        android:id="@+id/button_toggle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+
+</LinearLayout>
