@@ -1,27 +1,44 @@
 package br.cin.ufpe.if1001.taskmanager
 
 
+import android.Manifest
+import android.app.Activity
 import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.DialogInterface
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
 import android.net.wifi.WifiManager
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.CompoundButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.work.Data
 import androidx.work.ListenableWorker
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import br.cin.ufpe.if1001.taskmanager.databinding.ActivityMainBinding
+import br.cin.ufpe.if1001.taskmanager.utils.CallbackUtil.Companion.awaitCallback
+import br.cin.ufpe.if1001.taskmanager.utils.GeneralServices
+import br.cin.ufpe.if1001.taskmanager.utils.Permissions
 import br.cin.ufpe.if1001.taskmanager.workers.BluetoothCheckerWorker
 import br.cin.ufpe.if1001.taskmanager.workers.GPSCheckerWorker
 import br.cin.ufpe.if1001.taskmanager.workers.MobileDataCheckerWorker
 import br.cin.ufpe.if1001.taskmanager.workers.WifiCheckerWorker
+import com.karumi.dexter.Dexter
+import com.karumi.dexter.MultiplePermissionsReport
+import com.karumi.dexter.PermissionToken
+import com.karumi.dexter.listener.PermissionRequest
+import com.karumi.dexter.listener.multi.MultiplePermissionsListener
+import kotlinx.coroutines.*
 import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
@@ -46,14 +63,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val workManager = WorkManager.getInstance(this)
-    private val sharedPreferences = getSharedPreferences(SHARED_PREFERENCE, MODE_PRIVATE)
-    private val shEditor = sharedPreferences.edit()
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        val sharedPreferences = getSharedPreferences(SHARED_PREFERENCE, MODE_PRIVATE)
+        val shEditor = sharedPreferences.edit()
 
         val channel = NotificationChannel(
             NOTIFICATION_CHANNEL_ID,
@@ -100,6 +117,8 @@ class MainActivity : AppCompatActivity() {
 
     private val mobileOffDataButtonListener =
         CompoundButton.OnCheckedChangeListener { _, isChecked ->
+            val sharedPreferences = getSharedPreferences(SHARED_PREFERENCE, MODE_PRIVATE)
+            val shEditor = sharedPreferences.edit()
             if (isChecked) {
                 val workRequest = PeriodicWorkRequest
                     .Builder(MobileDataCheckerWorker::class.java, 1, TimeUnit.HOURS)
@@ -123,6 +142,8 @@ class MainActivity : AppCompatActivity() {
 
     private val gpsOffButtonListener =
         CompoundButton.OnCheckedChangeListener { _, isChecked ->
+            val sharedPreferences = getSharedPreferences(SHARED_PREFERENCE, MODE_PRIVATE)
+            val shEditor = sharedPreferences.edit()
             if (isChecked) {
                 val workerRequest = PeriodicWorkRequest
                     .Builder(GPSCheckerWorker::class.java, 1, TimeUnit.HOURS)
@@ -146,6 +167,8 @@ class MainActivity : AppCompatActivity() {
 
     private val bluetoothOffButtonListener =
         CompoundButton.OnCheckedChangeListener { _, isChecked ->
+            val sharedPreferences = getSharedPreferences(SHARED_PREFERENCE, MODE_PRIVATE)
+            val shEditor = sharedPreferences.edit()
             if (isChecked) {
                 val workerRequest = PeriodicWorkRequest
                     .Builder(BluetoothCheckerWorker::class.java, 1, TimeUnit.HOURS)
@@ -169,28 +192,62 @@ class MainActivity : AppCompatActivity() {
 
     private val wifiOffButtonListener =
         CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
+            val sharedPreferences = getSharedPreferences(SHARED_PREFERENCE, MODE_PRIVATE)
+            val shEditor = sharedPreferences.edit()
+
             if (isChecked) {
                 var homeWifiSSID = sharedPreferences.getString(WIFI_OFF_CONFIGURATION_HOME_SSID, null)
                 if (homeWifiSSID == null){
-                    // flow to configure feature
-                    val wifiManager = getSystemService(Context.WIFI_SERVICE) as WifiManager
-                    if (!wifiManager.isWifiEnabled){
-                        Toast.makeText(this, "Wifi need to be on to continue", Toast.LENGTH_SHORT).show()
-                        buttonView.isChecked = false
-                        return@OnCheckedChangeListener
-                    }
+                    // request permissions
+                    Dexter.withContext(this).withPermissions(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    ).withListener(object : MultiplePermissionsListener {
+                        override fun onPermissionsChecked(report: MultiplePermissionsReport?) {
+                            when {
+                                report == null -> throw IllegalStateException()
+                                report.areAllPermissionsGranted() -> {
+                                    // flow to configure feature
+                                    if (!(GeneralServices.isWifiOn(this@MainActivity) && GeneralServices.isGPSOn(this@MainActivity))){
+                                        Toast.makeText(this@MainActivity, "Wifi and GPS need to be on to continue", Toast.LENGTH_SHORT).show()
+                                        buttonView.isChecked = false
+                                    }
+                                    val wifiManager = getSystemService(Context.WIFI_SERVICE) as WifiManager
 
-                    val scanResultsSSID = wifiManager.scanResults.map { it.SSID }
-                    val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, scanResultsSSID)
+                                    val scanResultsSSID = wifiManager.scanResults.map { it.SSID }
+                                    val adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_spinner_dropdown_item, scanResultsSSID)
 
-                    AlertDialog.Builder(this)
-                        .setTitle("Choose your home wifi")
-                        .setAdapter(adapter, object : DialogInterface.OnClickListener {
-                            override fun onClick(dialog: DialogInterface?, which: Int) {
-                                shEditor.putString(WIFI_OFF_CONFIGURATION_HOME_SSID, scanResultsSSID[which])
-                                shEditor.commit()
+                                    AlertDialog.Builder(this@MainActivity)
+                                        .setTitle("Choose your home wifi")
+                                        .setAdapter(adapter, object : DialogInterface.OnClickListener {
+                                            override fun onClick(dialog: DialogInterface?, which: Int) {
+                                                shEditor.putString(WIFI_OFF_CONFIGURATION_HOME_SSID, scanResultsSSID[which])
+                                                shEditor.commit()
+                                            }
+                                        }).create().show()
+                                }
+                                report.isAnyPermissionPermanentlyDenied -> {
+                                    AlertDialog.Builder(this@MainActivity)
+                                        .setTitle("Permission needed")
+                                        .setMessage("This permission is needed to access wifi devices")
+                                        .setPositiveButton("ok") { dialog, _ ->
+                                            dialog.dismiss()
+                                            this@MainActivity.startActivity(
+                                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", this@MainActivity.packageName, null)).addFlags(
+                                                    Intent.FLAG_ACTIVITY_NEW_TASK))
+                                        }
+                                        .setNegativeButton("cancel") { dialog, _ ->
+                                            dialog.dismiss()
+                                        }
+                                        .create().show()
+                                }
                             }
-                        }).create().show()
+                        }
+
+                        override fun onPermissionRationaleShouldBeShown(permissions: MutableList<PermissionRequest>?, token: PermissionToken?) {
+                            token?.continuePermissionRequest()
+                        }
+                    }).check()
                 }
                 homeWifiSSID = sharedPreferences.getString(WIFI_OFF_CONFIGURATION_HOME_SSID, null)
                 homeWifiSSID?.let {
