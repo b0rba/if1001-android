@@ -34,6 +34,12 @@
                 android:layout_height="wrap_content"
                 layout="@layout/main_card"/>
 
+            <include
+                android:id="@+id/wifi_off"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                layout="@layout/main_card"/>
+
         </LinearLayout>
 
     </ScrollView>

@@ -1,16 +1,25 @@
 package br.cin.ufpe.if1001.taskmanager
 
 
+import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
+import android.content.DialogInterface
+import android.net.wifi.WifiManager
 import android.os.Bundle
+import android.util.Log
+import android.widget.ArrayAdapter
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.work.Data
+import androidx.work.ListenableWorker
 import androidx.work.PeriodicWorkRequest
 import androidx.work.WorkManager
 import br.cin.ufpe.if1001.taskmanager.databinding.ActivityMainBinding
 import br.cin.ufpe.if1001.taskmanager.workers.BluetoothCheckerWorker
 import br.cin.ufpe.if1001.taskmanager.workers.GPSCheckerWorker
+import br.cin.ufpe.if1001.taskmanager.workers.MobileDataCheckerWorker
 import br.cin.ufpe.if1001.taskmanager.workers.WifiCheckerWorker
 import java.util.concurrent.TimeUnit
 
@@ -21,11 +30,15 @@ class MainActivity : AppCompatActivity() {
         const val MOBILE_DATA_OFF_BUTTON_STATE = "mobile_data_off_wifi_button_state"
         const val MOBILE_DATA_OFF_WORKER_TAG = "mobile_data_off_wifi_worker_tag"
 
-        const val GPS_OFF_BUTTON_STATE = "gps_off_wifi_button_state"
-        const val GPS_OFF_WORKER_TAG = "gps_off_wifi_worker_tag"
+        const val GPS_OFF_BUTTON_STATE = "gps_off_button_state"
+        const val GPS_OFF_WORKER_TAG = "gps_off_worker_tag"
 
-        const val BLUETOOTH_OFF_BUTTON_STATE = "bluetooth_off_wifi_button_state"
-        const val BLUETOOTH_OFF_WORKER_TAG = "bluetooth_off_wifi_worker_tag"
+        const val BLUETOOTH_OFF_BUTTON_STATE = "bluetooth_off_button_state"
+        const val BLUETOOTH_OFF_WORKER_TAG = "bluetooth_off_worker_tag"
+
+        const val WIFI_OFF_BUTTON_STATE = "wifi_off_button_state"
+        const val WIFI_OFF_CONFIGURATION_HOME_SSID = "wifi_off_home_ssid_configured"
+        const val WIFI_OFF_WORKER_TAG = "wifi_off_worker_tag"
 
         const val NOTIFICATION_CHANNEL_ID = "6969"
         const val NOTIFICATION_CHANNEL_NAME = "Main Notification Channel"
@@ -61,7 +74,7 @@ class MainActivity : AppCompatActivity() {
             val shEditor = sharedPreferences.edit()
             if (isChecked) {
                 val workRequest = PeriodicWorkRequest
-                    .Builder(WifiCheckerWorker::class.java, 1, TimeUnit.HOURS)
+                    .Builder(MobileDataCheckerWorker::class.java, 1, TimeUnit.HOURS)
                     .addTag(MOBILE_DATA_OFF_WORKER_TAG)
                     .build()
 
@@ -137,5 +150,62 @@ class MainActivity : AppCompatActivity() {
             shEditor.commit()
         }
 
+        //Turn off wifi when leave home
+        // TODO: ask permission at runtime
+        val wifiOffCard = binding.wifiOff
+        wifiOffCard.cardText.text = getString(R.string.wifi_off_card_text)
+        wifiOffCard.buttonToggle.isChecked =
+            sharedPreferences.getBoolean(WIFI_OFF_BUTTON_STATE, false)
+
+        wifiOffCard.buttonToggle.setOnCheckedChangeListener { _, isChecked ->
+            val shEditor = sharedPreferences.edit()
+
+            if (isChecked) {
+                var homeWifiSSID = sharedPreferences.getString(WIFI_OFF_CONFIGURATION_HOME_SSID, null)
+                if (homeWifiSSID == null){
+                    // flow to configure feature
+                    val wifiManager = getSystemService(Context.WIFI_SERVICE) as WifiManager
+                    if (!wifiManager.isWifiEnabled){
+                        Toast.makeText(this, "Wifi need to be on to continue", Toast.LENGTH_SHORT).show()
+                        wifiOffCard.buttonToggle.isChecked = false
+                        return@setOnCheckedChangeListener
+                    }
+
+                    val scanResultsSSID = wifiManager.scanResults.map { it.SSID }
+                    val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, scanResultsSSID)
+
+                    AlertDialog.Builder(this)
+                        .setTitle("Choose your home wifi")
+                        .setAdapter(adapter, object : DialogInterface.OnClickListener {
+                            override fun onClick(dialog: DialogInterface?, which: Int) {
+                                shEditor.putString(WIFI_OFF_CONFIGURATION_HOME_SSID, scanResultsSSID[which])
+                                shEditor.commit()
+                            }
+                        }).create().show()
+                }
+                homeWifiSSID = sharedPreferences.getString(WIFI_OFF_CONFIGURATION_HOME_SSID, null)
+                homeWifiSSID?.let {
+                    val workerRequest = PeriodicWorkRequest
+                        .Builder(WifiCheckerWorker::class.java, 1, TimeUnit.HOURS)
+                        .addTag(WIFI_OFF_WORKER_TAG)
+                        .setInputData(Data.Builder().putString(WIFI_OFF_CONFIGURATION_HOME_SSID, homeWifiSSID).build())
+                        .build()
+
+                    workManager.enqueue(workerRequest)
+                    shEditor.putString(WIFI_OFF_WORKER_TAG, WIFI_OFF_WORKER_TAG)
+                    shEditor.putBoolean(WIFI_OFF_BUTTON_STATE, true)
+                    shEditor.commit()
+                    return@setOnCheckedChangeListener
+                }
+                wifiOffCard.buttonToggle.isChecked = false
+            } else {
+                val wifiOffWorkerTag =
+                    sharedPreferences.getString(WIFI_OFF_WORKER_TAG, null)
+                wifiOffWorkerTag?.let { workManager.cancelAllWorkByTag(it) }
+                shEditor.remove(WIFI_OFF_WORKER_TAG)
+                shEditor.putBoolean(WIFI_OFF_BUTTON_STATE, false)
+                shEditor.commit()
+            }
+        }
     }
 }

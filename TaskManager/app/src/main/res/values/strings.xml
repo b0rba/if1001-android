@@ -13,4 +13,8 @@
     <string name="bluetooth_off_notification_title">Turn Off Bluetooth</string>
     <string name="bluetooth_off_notification_text">Are u using Bluetooth? if not, remember to turn it off</string>
 
+    <string name="wifi_off_card_text">Turn Off Wifi When leave home</string>
+    <string name="wifi_off_notification_title">Not at home? Turn Off Wifi</string>
+    <string name="wifi_off_notification_text">Are u using wifi? if not, remember to turn it off</string>
+
 </resources>
