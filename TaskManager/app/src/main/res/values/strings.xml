@@ -1,3 +1,6 @@
 <resources>
-    <string name="app_name">Task Manager</string>
+    <string name="app_name">Task Manager Boladao</string>
+    <string name="mobile_data_off_card_text">Turn Off Mobile Data When Wifi is On</string>
+    <string name="mobile_data_off_notification_title">Turn Off Mobile Data When Wifi is On</string>
+    <string name="mobile_data_off_notification_text">Turn Off Mobile Data When Wifi is On</string>
 </resources>
