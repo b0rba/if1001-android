@@ -1,30 +1,18 @@
 package br.cin.ufpe.if1001.taskmanager.workers
 
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
-import android.net.ConnectivityManager
-import android.net.Network
-import android.net.NetworkInfo
-import android.net.wifi.WifiManager
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import br.cin.ufpe.if1001.taskmanager.MainActivity
 import br.cin.ufpe.if1001.taskmanager.R
-import kotlin.math.log
+import br.cin.ufpe.if1001.taskmanager.utils.GeneralServices
 
 class WifiCheckerWorker(context: Context, params: WorkerParameters) : Worker(context, params) {
     override fun doWork(): Result {
         val context = super.getApplicationContext()
-
-        val wifiManager = context.getSystemService(Context.WIFI_SERVICE) as WifiManager
-        if (!wifiManager.isWifiEnabled)
-            return Result.success()
-
-        val currSSID = wifiManager.connectionInfo.ssid
+        val currSSID = GeneralServices.getCurrSSID(context)
 
         if (currSSID.equals(inputData.getString(MainActivity.WIFI_OFF_CONFIGURATION_HOME_SSID)))
             return Result.success()

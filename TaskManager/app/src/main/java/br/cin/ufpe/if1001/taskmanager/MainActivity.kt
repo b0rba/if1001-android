@@ -10,6 +10,7 @@ import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.util.Log
 import android.widget.ArrayAdapter
+import android.widget.CompoundButton
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.work.Data
@@ -45,14 +46,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val workManager = WorkManager.getInstance(this)
+    private val sharedPreferences = getSharedPreferences(SHARED_PREFERENCE, MODE_PRIVATE)
+    private val shEditor = sharedPreferences.edit()
     private lateinit var binding: ActivityMainBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
-        val sharedPreferences = getSharedPreferences(SHARED_PREFERENCE, MODE_PRIVATE)
 
         val channel = NotificationChannel(
             NOTIFICATION_CHANNEL_ID,
@@ -70,8 +71,35 @@ class MainActivity : AppCompatActivity() {
         mobileDataOffCard.buttonToggle.isChecked =
             sharedPreferences.getBoolean(MOBILE_DATA_OFF_BUTTON_STATE, false)
 
-        mobileDataOffCard.buttonToggle.setOnCheckedChangeListener { _, isChecked ->
-            val shEditor = sharedPreferences.edit()
+        mobileDataOffCard.buttonToggle.setOnCheckedChangeListener(mobileOffDataButtonListener)
+
+        // Gps Off
+        val gpsOffCard = binding.gpsOff
+        gpsOffCard.cardText.text = getString(R.string.gps_off_card_text)
+        gpsOffCard.buttonToggle.isChecked =
+            sharedPreferences.getBoolean(GPS_OFF_BUTTON_STATE, false)
+
+        gpsOffCard.buttonToggle.setOnCheckedChangeListener(gpsOffButtonListener)
+
+        // Bluetooth Off
+        val bluetoothOffCard = binding.bluetoothOff
+        bluetoothOffCard.cardText.text = getString(R.string.bluetooth_off_card_text)
+        bluetoothOffCard.buttonToggle.isChecked =
+            sharedPreferences.getBoolean(BLUETOOTH_OFF_BUTTON_STATE, false)
+        bluetoothOffCard.buttonToggle.setOnCheckedChangeListener(bluetoothOffButtonListener)
+
+        //Turn off wifi when leave home
+        // TODO: ask permission at runtime
+        val wifiOffCard = binding.wifiOff
+        wifiOffCard.cardText.text = getString(R.string.wifi_off_card_text)
+        wifiOffCard.buttonToggle.isChecked =
+            sharedPreferences.getBoolean(WIFI_OFF_BUTTON_STATE, false)
+
+        wifiOffCard.buttonToggle.setOnCheckedChangeListener(wifiOffButtonListener)
+    }
+
+    private val mobileOffDataButtonListener =
+        CompoundButton.OnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 val workRequest = PeriodicWorkRequest
                     .Builder(MobileDataCheckerWorker::class.java, 1, TimeUnit.HOURS)
@@ -92,14 +120,9 @@ class MainActivity : AppCompatActivity() {
             }
             shEditor.commit()
         }
-        // Gps Off
-        val gpsOffCard = binding.gpsOff
-        gpsOffCard.cardText.text = getString(R.string.gps_off_card_text)
-        gpsOffCard.buttonToggle.isChecked =
-            sharedPreferences.getBoolean(GPS_OFF_BUTTON_STATE, false)
 
-        gpsOffCard.buttonToggle.setOnCheckedChangeListener { _, isChecked ->
-            val shEditor = sharedPreferences.edit()
+    private val gpsOffButtonListener =
+        CompoundButton.OnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 val workerRequest = PeriodicWorkRequest
                     .Builder(GPSCheckerWorker::class.java, 1, TimeUnit.HOURS)
@@ -121,14 +144,8 @@ class MainActivity : AppCompatActivity() {
             shEditor.commit()
         }
 
-        // Bluetooth Off
-        val bluetoothOffCard = binding.bluetoothOff
-        bluetoothOffCard.cardText.text = getString(R.string.bluetooth_off_card_text)
-        bluetoothOffCard.buttonToggle.isChecked =
-            sharedPreferences.getBoolean(BLUETOOTH_OFF_BUTTON_STATE, false)
-
-        bluetoothOffCard.buttonToggle.setOnCheckedChangeListener { _, isChecked ->
-            val shEditor = sharedPreferences.edit()
+    private val bluetoothOffButtonListener =
+        CompoundButton.OnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 val workerRequest = PeriodicWorkRequest
                     .Builder(BluetoothCheckerWorker::class.java, 1, TimeUnit.HOURS)
@@ -150,16 +167,8 @@ class MainActivity : AppCompatActivity() {
             shEditor.commit()
         }
 
-        //Turn off wifi when leave home
-        // TODO: ask permission at runtime
-        val wifiOffCard = binding.wifiOff
-        wifiOffCard.cardText.text = getString(R.string.wifi_off_card_text)
-        wifiOffCard.buttonToggle.isChecked =
-            sharedPreferences.getBoolean(WIFI_OFF_BUTTON_STATE, false)
-
-        wifiOffCard.buttonToggle.setOnCheckedChangeListener { _, isChecked ->
-            val shEditor = sharedPreferences.edit()
-
+    private val wifiOffButtonListener =
+        CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
             if (isChecked) {
                 var homeWifiSSID = sharedPreferences.getString(WIFI_OFF_CONFIGURATION_HOME_SSID, null)
                 if (homeWifiSSID == null){
@@ -167,8 +176,8 @@ class MainActivity : AppCompatActivity() {
                     val wifiManager = getSystemService(Context.WIFI_SERVICE) as WifiManager
                     if (!wifiManager.isWifiEnabled){
                         Toast.makeText(this, "Wifi need to be on to continue", Toast.LENGTH_SHORT).show()
-                        wifiOffCard.buttonToggle.isChecked = false
-                        return@setOnCheckedChangeListener
+                        buttonView.isChecked = false
+                        return@OnCheckedChangeListener
                     }
 
                     val scanResultsSSID = wifiManager.scanResults.map { it.SSID }
@@ -195,9 +204,9 @@ class MainActivity : AppCompatActivity() {
                     shEditor.putString(WIFI_OFF_WORKER_TAG, WIFI_OFF_WORKER_TAG)
                     shEditor.putBoolean(WIFI_OFF_BUTTON_STATE, true)
                     shEditor.commit()
-                    return@setOnCheckedChangeListener
+                    return@OnCheckedChangeListener
                 }
-                wifiOffCard.buttonToggle.isChecked = false
+                buttonView.isChecked = false
             } else {
                 val wifiOffWorkerTag =
                     sharedPreferences.getString(WIFI_OFF_WORKER_TAG, null)
@@ -207,5 +216,4 @@ class MainActivity : AppCompatActivity() {
                 shEditor.commit()
             }
         }
-    }
 }
