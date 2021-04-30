@@ -37,7 +37,7 @@ class WifiCheckerWorker(context: Context, params: WorkerParameters) : Worker(con
             .setAutoCancel(true)
 
         with(NotificationManagerCompat.from(context)) {
-            notify(69, builder.build())
+            notify(1, builder.build())
         }
 
         return Result.success()

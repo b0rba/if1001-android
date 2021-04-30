@@ -1,6 +1,16 @@
 <resources>
     <string name="app_name">Task Manager Boladao</string>
+
     <string name="mobile_data_off_card_text">Turn Off Mobile Data When Wifi is On</string>
-    <string name="mobile_data_off_notification_title">Turn Off Mobile Data When Wifi is On</string>
-    <string name="mobile_data_off_notification_text">Turn Off Mobile Data When Wifi is On</string>
+    <string name="mobile_data_off_notification_title">Turn Off Mobile Data</string>
+    <string name="mobile_data_off_notification_text">Remember to turn off mobile data</string>
+
+    <string name="gps_off_card_text">Turn Off GPS When not using</string>
+    <string name="gps_off_notification_title">Turn Off GPS</string>
+    <string name="gps_off_notification_text">Are u using GPS? if not, remember to turn it off</string>
+
+    <string name="bluetooth_off_card_text">Turn Off Bluetooth When not using</string>
+    <string name="bluetooth_off_notification_title">Turn Off Bluetooth</string>
+    <string name="bluetooth_off_notification_text">Are u using Bluetooth? if not, remember to turn it off</string>
+
 </resources>

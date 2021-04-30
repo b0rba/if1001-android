@@ -17,44 +17,21 @@
             android:orientation="vertical">
 
             <include
-                android:id="@+id/screen_lock_usb"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                layout="@layout/main_card"/>
-
-            <include
-                android:id="@+id/wifi_off_home"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
-                layout="@layout/main_card"/>
-
-            <include
                 android:id="@+id/mobile_data_off_wifi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 layout="@layout/main_card"/>
 
             <include
-                android:id="@+id/wrong_password_picture"
+                android:id="@+id/gps_off"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:visibility="gone"
                 layout="@layout/main_card"/>
 
             <include
-                android:id="@+id/blue_light_filter"
+                android:id="@+id/bluetooth_off"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:visibility="gone"
-                layout="@layout/main_card"/>
-
-            <include
-                android:id="@+id/bluetooth_custom_settings"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:visibility="gone"
                 layout="@layout/main_card"/>
 
         </LinearLayout>
