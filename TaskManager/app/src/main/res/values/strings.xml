@@ -7,19 +7,19 @@
     <string name="mobile_data_off_notification_title">Mobile Data Alert</string>
     <string name="mobile_data_off_notification_text">Remember to turn off mobile data</string>
 
-    <string name="gps_off_card_text">Turn Off GPS When not using</string>
+    <string name="gps_off_card_text">GPS Alert</string>
     <string name="gps_off_dialog_title">GPS Alert</string>
     <string name="gps_off_dialog_text">Activate to be notified if you forgot to turn off GPS</string>
     <string name="gps_off_notification_title">GPS Alert</string>
     <string name="gps_off_notification_text">Are u using GPS? if not, remember to turn it off</string>
 
-    <string name="bluetooth_off_card_text">Turn Off Bluetooth When not using</string>
+    <string name="bluetooth_off_card_text">Bluetooth Alert</string>
     <string name="bluetooth_off_dialog_title">Bluetooth Alert</string>
     <string name="bluetooth_off_dialog_text">Activate to be notified if you forgot to turn off bluetooth</string>
     <string name="bluetooth_off_notification_title">Bluetooth Alert</string>
     <string name="bluetooth_off_notification_text">Are u using Bluetooth? if not, remember to turn it off</string>
 
-    <string name="wifi_off_card_text">Turn Off Wifi When leave home</string>
+    <string name="wifi_off_card_text">Wifi Alert</string>
     <string name="wifi_off_dialog_title">Wifi Alert</string>
     <string name="wifi_off_dialog_text">Activate to be notified if you forget to turn off wifi after leaving home</string>
     <string name="wifi_off_notification_title">Wifi Alert</string>
