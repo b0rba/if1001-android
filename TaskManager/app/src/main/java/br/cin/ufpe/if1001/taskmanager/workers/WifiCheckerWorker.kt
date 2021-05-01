@@ -12,13 +12,14 @@ class WifiCheckerWorker(context: Context, params: WorkerParameters) : Worker(con
     override fun doWork(): Result {
         val context = super.getApplicationContext()
         val currSSID = GeneralServices.getCurrSSID(context)
+        currSSID?.let {
+            if (it == inputData.getString(MainActivity.WIFI_OFF_CONFIGURATION_HOME_SSID))
+                return Result.success()
 
-        if (currSSID.equals(inputData.getString(MainActivity.WIFI_OFF_CONFIGURATION_HOME_SSID)))
-            return Result.success()
-
-        NotificationUtil.buildAndSendNotification(context,
-            context.getString(R.string.wifi_off_notification_title),
-            context.getString(R.string.wifi_off_notification_text), true, 1)
+            NotificationUtil.buildAndSendNotification(context,
+                context.getString(R.string.wifi_off_notification_title),
+                context.getString(R.string.wifi_off_notification_text), true, 1)
+        }
 
         return Result.success()
     }
