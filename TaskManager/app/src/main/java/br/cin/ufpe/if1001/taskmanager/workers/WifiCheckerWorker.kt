@@ -1,6 +1,7 @@
 package br.cin.ufpe.if1001.taskmanager.workers
 
 import android.content.Context
+import android.net.wifi.WifiManager
 import android.util.Log
 import androidx.work.Worker
 import androidx.work.WorkerParameters
@@ -13,8 +14,11 @@ class WifiCheckerWorker(context: Context, params: WorkerParameters) : Worker(con
     override fun doWork(): Result {
         val context = super.getApplicationContext()
         val currSSID = GeneralServices.getCurrSSID(context)
-        Log.i("XABLAU", currSSID)
-        if (currSSID == inputData.getString(MainActivity.WIFI_OFF_CONFIGURATION_HOME_SSID))
+        if (!GeneralServices.isGPSOn(context))
+            return Result.success()
+
+        if (currSSID == inputData.getString(MainActivity.WIFI_OFF_CONFIGURATION_HOME_SSID)
+            || currSSID != WifiManager.UNKNOWN_SSID)
             return Result.success()
 
         NotificationUtil.buildAndSendNotification(context,
