@@ -2,4 +2,12 @@
 
 ## Class Information
 
-* [Github](https://github.com/if1001/if1001.github.io) 
+* [Github](https://github.com/if1001/if1001.github.io)
+
+## App
+
+The idea is to have a general manager to alert user about the uses of GPS, bluetooth, mobile data and wifi.
+
+## Demo
+
+Watch the demo [here](https://youtu.be/sPVTSPRG7KE) in PT-BR
